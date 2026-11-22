@@ -19,7 +19,7 @@
 
   const fresh = () => ({
     size: 8, diff: 'medium', daily: false, games: {}, next: {}, best: {},
-    streak: { cur: 0, best: 0 }, settings: { autoX: true, vibe: true },
+    streak: { cur: 0, best: 0 }, settings: { autoX: true, vibe: true, theme: 'auto' },
   });
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} };
   const load = () => { try { const v = localStorage.getItem(LS); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
@@ -477,7 +477,32 @@
     a.checked = S.settings.autoX; v.checked = S.settings.vibe;
     a.addEventListener('change', () => { S.settings.autoX = a.checked; save(); if (G) render(); });
     v.addEventListener('change', () => { S.settings.vibe = v.checked; save(); });
+    applyTheme();
+    $('bTheme').addEventListener('click', () => {
+      const order = ['auto', 'light', 'dark'];
+      setTheme(order[(order.indexOf(S.settings.theme) + 1) % order.length]);
+      toast(`Motyw: ${THEME_LABEL[S.settings.theme].toLowerCase()}`);
+    });
+    for (const b of document.querySelectorAll('[data-theme-opt]')) b.addEventListener('click', () => setTheme(b.dataset.themeOpt));
   }
+
+  // ---------- theme ----------
+  const THEME_LABEL = { auto: 'Auto', light: 'Jasny', dark: 'Ciemny' };
+  const THEME_BG = { light: '#F8F4EE', dark: '#1C1916' };
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  function setTheme(t) { S.settings.theme = t; save(); applyTheme(); }
+  function applyTheme() {
+    const t = S.settings.theme;
+    const root = document.documentElement;
+    if (t === 'auto') delete root.dataset.theme; else root.dataset.theme = t;
+    const eff = t === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : t;
+    for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = t === 'auto' ? THEME_BG[m.media.includes('dark') ? 'dark' : 'light'] : THEME_BG[eff];
+    const btn = $('bTheme');
+    btn.dataset.mode = t;
+    btn.setAttribute('aria-label', `Motyw: ${THEME_LABEL[t]}`);
+    for (const b of document.querySelectorAll('[data-theme-opt]')) b.setAttribute('aria-pressed', String(b.dataset.themeOpt === t));
+  }
+  darkQuery.addEventListener('change', () => { if (S.settings.theme === 'auto') applyTheme(); });
 
   // ---------- timer ----------
   let lastTick = performance.now();
@@ -499,6 +524,7 @@
     S.games = Object.fromEntries(Object.entries(S.games || {}).filter(([, g]) => g && g.v === 2));
     S.next = Object.fromEntries(Object.entries(S.next || {}).filter(([, g]) => g && g.v === 2));
     S.settings = Object.assign(def.settings, S.settings || {});
+    if (!['auto', 'light', 'dark'].includes(S.settings.theme)) S.settings.theme = 'auto';
     S.streak = Object.assign(def.streak, S.streak || {});
     S.best = Object.fromEntries(Object.entries(S.best || {}).filter(([k]) => k.includes('-')));
     if (!SIZES.includes(S.size)) S.size = 8;
