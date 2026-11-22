@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F0EEF4">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16131C">
+<meta name="description" content="Logiczna gra z kotami: na każdym kocu śpi jeden kot.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kocie Koce">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Kocie Koce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen phone app — mode chips, status strip, square board of wool blankets, thumb-reach toolbar */
+:root {
+  --bg: #F0EEF4;
+  --surface: #FFFFFF;
+  --ink: #29233A;
+  --muted: #6D6680;
+  --accent: #5B3A9B;
+  --accent-ink: #FFFFFF;
+  --edge: #29233A;
+  --cat: #29233A;
+  --cat-face: #F7F3EC;
+  --mark: rgba(41, 35, 58, .62);
+  --automark: rgba(41, 35, 58, .2);
+  --bad: #C4372E;
+  --good: #2F7D4F;
+  --chip: #E3DFEB;
+  --r0: #F2D27A; --r1: #A9C9A0; --r2: #EBA9A3; --r3: #9FBADB; --r4: #CBAAD9;
+  --r5: #F3B680; --r6: #8FD0C4; --r7: #DACCA6; --r8: #B7B9EA; --r9: #E8ABCB;
+  --f-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16131C; --surface: #221E2B; --ink: #EEE9F5; --muted: #A49DB3;
+    --accent: #B996EA; --accent-ink: #1A1422; --edge: #0B0910;
+    --cat: #F6F1FB; --cat-face: #221E2B;
+    --mark: rgba(255, 255, 255, .78); --automark: rgba(255, 255, 255, .26);
+    --bad: #FF7A6E; --good: #6FD39A; --chip: #2D2838;
+    --r0: #8A7436; --r1: #5D7D56; --r2: #8F5A56; --r3: #4E6A8F; --r4: #73588A;
+    --r5: #94633A; --r6: #3E7E75; --r7: #7A7058; --r8: #5D5F9A; --r9: #8C5476;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+/* Mobile only: the whole game is one fixed phone screen; on desktop it stays a phone-width column. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  user-select: none; -webkit-user-select: none;
+}
+.app {
+  height: 100dvh; max-width: 480px; margin: 0 auto;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 10px;
+}
+.stage {
+  flex: 1 1 auto; min-height: 0;
+  container-type: size;
+  display: flex; flex-direction: column; justify-content: safe center; align-items: center; gap: 8px;
+}
+.stage .status { width: min(100cqw, calc(100cqh - 30px)); }
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 {
+  font-family: var(--f-display); font-weight: 800; font-size: 30px; letter-spacing: -.02em;
+  margin: 0; line-height: 1; text-wrap: balance;
+}
+h1 span { color: var(--accent); }
+.streak {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
+  background: var(--surface); border-radius: 999px; padding: 6px 12px 6px 8px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+.streak .paw { width: 22px; height: 22px; color: var(--accent); }
+.streak.broken .paw { color: var(--muted); }
+.streak small { font-weight: 500; color: var(--muted); }
+.streak.bump { animation: bump .45s ease; }
+@keyframes bump { 30% { transform: scale(1.14); } }
+
+.modes { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.modes::-webkit-scrollbar { display: none; }
+.modes button {
+  flex: 0 0 auto; border: 0; cursor: pointer;
+  font: 600 14px var(--f-body); color: var(--ink);
+  background: var(--chip); padding: 8px 13px; border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.modes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.modes button:focus-visible, .tools button:focus-visible, .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.status {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 20px;
+}
+.status b { color: var(--ink); font-weight: 700; }
+.status .left, .status .right { display: flex; gap: 14px; align-items: center; }
+.oops { color: var(--bad); font-weight: 700; }
+
+.board-wrap {
+  position: relative;
+  width: min(100cqw, calc(100cqh - 30px)); height: min(100cqw, calc(100cqh - 30px)); flex: 0 0 auto;
+  border: 3px solid var(--edge); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 10px 30px -12px rgba(30, 20, 50, .35);
+}
+#board {
+  position: absolute; inset: 0; display: grid;
+  grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--n, 8), minmax(0, 1fr));
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  outline: none; cursor: pointer;
+}
+#lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.c { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.c svg { position: absolute; left: 14%; top: 14%; width: 72%; height: 72%; display: block; pointer-events: none; }
+.c.x svg, .c.ax svg { left: 29%; top: 29%; width: 42%; height: 42%; }
+.c.x { color: var(--mark); }
+.c.ax { color: var(--automark); }
+.c.cat { color: var(--cat); }
+.c.cat svg { animation: pop .18s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes pop { from { transform: scale(.55); } }
+.c.oops { color: var(--bad); }
+.c.oops::after, .c.flash::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--bad); opacity: 0; animation: oops .7s ease;
+}
+.c.flash::after { background: var(--accent); animation-duration: 1.2s; animation-iteration-count: 2; }
+@keyframes oops { 20% { opacity: .45; } 100% { opacity: 0; } }
+#board:focus-visible .c.cur { box-shadow: inset 0 0 0 3px var(--accent); }
+.won .c.cat svg { animation: snooze 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes snooze { 50% { transform: scale(1.06, .94); } }
+
+.gen {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  font: 700 16px var(--f-display); color: var(--ink);
+}
+
+.tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; flex: 0 0 auto; }
+.tools button {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
+  border: 0; background: var(--surface); color: var(--ink); cursor: pointer;
+  border-radius: 14px; padding: 10px 0 9px; font: 600 11.5px var(--f-body);
+  touch-action: manipulation; white-space: nowrap;
+}
+.tools button svg { width: 24px; height: 24px; }
+.tools button:active:not(:disabled) { transform: scale(.94); }
+.tools button:disabled { opacity: .38; cursor: default; }
+.tools button.armed { background: var(--bad); color: #fff; }
+
+.sheet { position: fixed; inset: 0; z-index: 25; display: flex; flex-direction: column; justify-content: flex-end; }
+.sheet .backdrop { position: absolute; inset: 0; background: rgba(20, 14, 30, .45); }
+.sheet .panel {
+  position: relative; background: var(--surface); color: var(--ink);
+  border-radius: 22px 22px 0 0; max-height: 86dvh; overflow-y: auto; overscroll-behavior: contain;
+  width: 100%; max-width: 480px; margin: 0 auto;
+  padding: 10px max(18px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  animation: slide .22s cubic-bezier(.2, .9, .3, 1);
+  user-select: text; -webkit-user-select: text;
+}
+@keyframes slide { from { transform: translateY(100%); } }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--chip); margin: 0 auto 8px; }
+.sheet h2 { font: 800 20px var(--f-display); margin: 10px 0 4px; }
+.sheet p, .sheet li { line-height: 1.5; margin: 6px 0; }
+.sheet ul { padding-left: 18px; margin: 4px 0 8px; }
+.sheet .btn { width: 100%; margin-top: 12px; }
+.muted { color: var(--muted); }
+.toggle { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; font-weight: 600; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 auto; }
+
+.toast {
+  position: fixed; left: 50%; top: calc(100px + env(safe-area-inset-top, 0px));
+  transform: translate(-50%, -12px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--bg); font-weight: 600;
+  padding: 10px 16px; border-radius: 999px; max-width: calc(100% - 32px);
+  transition: opacity .18s, transform .18s; z-index: 20; text-align: center;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+.win {
+  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
+  background: rgba(20, 14, 30, .45);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.win .card {
+  background: var(--surface); color: var(--ink); border-radius: 20px;
+  padding: 24px 22px 20px; width: min(100%, 360px); text-align: center;
+  display: flex; flex-direction: column; gap: 10px;
+  animation: rise .3s cubic-bezier(.3, 1.4, .5, 1);
+}
+@keyframes rise { from { transform: translateY(24px) scale(.96); opacity: 0; } }
+.win h2 { font-family: var(--f-display); font-weight: 800; font-size: 26px; margin: 0; text-wrap: balance; }
+.win .big { font: 800 44px var(--f-display); font-variant-numeric: tabular-nums; color: var(--accent); line-height: 1; }
+.win .row { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
+.btn {
+  border: 0; cursor: pointer; border-radius: 12px; padding: 12px 16px;
+  font: 700 15px var(--f-body); background: var(--chip); color: var(--ink);
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.win .cat-hero { width: 72px; height: 72px; margin: 0 auto; color: var(--cat); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cat" viewBox="0 0 100 100">
+      <path d="M17 44 L19 12 Q20 9 23 11 L41 26 Q50 24 59 26 L77 11 Q80 9 81 12 L83 44 Q91 58 85 72 Q75 90 50 90 Q25 90 15 72 Q9 58 17 44 Z" fill="currentColor"/>
+      <path d="M29 58 Q35.5 65 42 58 M58 58 Q64.5 65 71 58" stroke="var(--cat-face)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M46 69 L54 69 L50 74 Z" fill="var(--cat-face)"/>
+    </symbol>
+    <symbol id="i-cat-angry" viewBox="0 0 100 100">
+      <path d="M17 44 L19 12 Q20 9 23 11 L41 26 Q50 24 59 26 L77 11 Q80 9 81 12 L83 44 Q91 58 85 72 Q75 90 50 90 Q25 90 15 72 Q9 58 17 44 Z" fill="currentColor"/>
+      <path d="M28 50 L42 55 M72 50 L58 55" stroke="var(--cat-face)" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="36" cy="61" r="4.5" fill="var(--cat-face)"/><circle cx="64" cy="61" r="4.5" fill="var(--cat-face)"/>
+      <path d="M42 77 Q50 71 58 77" stroke="var(--cat-face)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 100 100">
+      <path d="M22 22 L78 78 M78 22 L22 78" stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="16" rx="5.2" ry="4.3" fill="currentColor"/>
+      <ellipse cx="5" cy="10.5" rx="2.2" ry="2.8" fill="currentColor"/>
+      <ellipse cx="9.3" cy="6.3" rx="2.2" ry="2.9" fill="currentColor"/>
+      <ellipse cx="14.7" cy="6.3" rx="2.2" ry="2.9" fill="currentColor"/>
+      <ellipse cx="19" cy="10.5" rx="2.2" ry="2.8" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app">
+  <header class="top">
+    <h1>Kocie <span>Koce</span></h1>
+    <div class="streak" id="streak" title="Plansze ułożone pod rząd bez wtopy i bez podpowiedzi">
+      <svg class="paw"><use href="#i-paw"/></svg>
+      <span>Passa <b id="streakCur">0</b></span>
+      <small>rekord <span id="streakBest">0</span></small>
+    </div>
+  </header>
+
+  <nav class="modes" id="modes" aria-label="Rozmiar planszy"></nav>
+
+  <div class="stage">
+    <div class="status">
+      <div class="left"><span>czas <b id="timer">0:00</b></span><span><b id="count">0/8</b> kotów</span></div>
+      <div class="right"><span id="oops"></span><span id="best"></span></div>
+    </div>
+    <div class="board-wrap" id="wrap">
+      <div id="board" tabindex="0" role="grid" aria-label="Plansza"></div>
+      <svg id="lines" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="gen" id="gen" hidden>Rozkładam koce…</div>
+    </div>
+  </div>
+
+  <div class="tools">
+    <button id="bUndo" type="button" aria-label="Cofnij">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Cofnij</button>
+    <button id="bRedo" type="button" aria-label="Ponów">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>Ponów</button>
+    <button id="bHint" type="button" aria-label="Podpowiedź">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Podpowiedź</button>
+    <button id="bClear" type="button" aria-label="Wyczyść krzyżyki">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4-4L14 6l7 7-8 8H7z"/><path d="M21 21H11"/></svg>Wyczyść</button>
+    <button id="bNew" type="button" aria-label="Nowa plansza">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg>Nowa</button>
+    <button id="bMenu" type="button" aria-label="Zasady i ustawienia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 17h.01"/></svg>Zasady</button>
+  </div>
+</main>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="backdrop" id="sheetBackdrop"></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <h2 id="sheetTitle">Zasady</h2>
+    <p>Na każdym kolorowym kocu śpi dokładnie jeden kot. Koty nie znoszą tłoku, więc:</p>
+    <ul>
+      <li>w każdym wierszu i w każdej kolumnie jest jeden kot,</li>
+      <li>dwa koty nigdy się nie stykają, także po skosie.</li>
+    </ul>
+    <h2>Sterowanie</h2>
+    <p><b>Dotknij</b> pustego pola: ×. Dotknij ×: kot. Dotknij kota: zabierasz go.</p>
+    <p><b>Przeciągnij palcem</b> od pustego pola, a × stanie na całej trasie. Przeciągnij od ×, a będziesz je zmazywać. Przeciąganie nie rusza kotów.</p>
+    <p><b>Wtopa</b> to kot położony tam, gdzie nie może spać. Ucieka, a na jego miejscu zostaje ×. Wtopa albo podpowiedź zeruje passę.</p>
+    <h2>Ustawienia</h2>
+    <label class="toggle"><input type="checkbox" id="optAuto"> Auto-krzyżyki wokół kotów (jasne ×)</label>
+    <label class="toggle"><input type="checkbox" id="optVibe"> Wibracja (Android)</label>
+    <button class="btn primary" id="sheetClose" type="button">Graj</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="win" id="win" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <svg class="cat-hero"><use href="#i-cat"/></svg>
+    <h2 id="winTitle">Wszystkie koty śpią</h2>
+    <div class="big" id="winTime">0:00</div>
+    <p id="winInfo" class="muted" style="margin:0"></p>
+    <div class="row">
+      <button class="btn" id="winClose" type="button">Zamknij</button>
+      <button class="btn primary" id="winNext" type="button">Następna plansza</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// LOGIC START
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function shuffle(a, rng) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function randomSolution(n, rng) {
+  const sol = [], used = new Array(n).fill(false);
+  const rec = (r) => {
+    if (r === n) return true;
+    for (const c of shuffle([...Array(n).keys()], rng)) {
+      if (used[c] || (r > 0 && Math.abs(c - sol[r - 1]) <= 1)) continue;
+      used[c] = true; sol[r] = c;
+      if (rec(r + 1)) return true;
+      used[c] = false;
+    }
+    return false;
+  };
+  rec(0);
+  return sol;
+}
+function growRegions(n, sol, rng) {
+  const reg = new Array(n * n).fill(-1);
+  for (let r = 0; r < n; r++) reg[r * n + sol[r]] = r;
+  let left = n * n - n;
+  while (left > 0) {
+    const frontier = [];
+    for (let i = 0; i < n * n; i++) {
+      if (reg[i] !== -1) continue;
+      const r = (i / n) | 0, c = i % n;
+      if ((r > 0 && reg[i - n] !== -1) || (r < n - 1 && reg[i + n] !== -1) ||
+          (c > 0 && reg[i - 1] !== -1) || (c < n - 1 && reg[i + 1] !== -1)) frontier.push(i);
+    }
+    const i = frontier[Math.floor(rng() * frontier.length)];
+    const r = (i / n) | 0, c = i % n, opts = [];
+    if (r > 0 && reg[i - n] !== -1) opts.push(reg[i - n]);
+    if (r < n - 1 && reg[i + n] !== -1) opts.push(reg[i + n]);
+    if (c > 0 && reg[i - 1] !== -1) opts.push(reg[i - 1]);
+    if (c < n - 1 && reg[i + 1] !== -1) opts.push(reg[i + 1]);
+    reg[i] = opts[Math.floor(rng() * opts.length)];
+    left--;
+  }
+  return reg;
+}
+function countSolutions(n, reg, limit) {
+  const colUsed = new Uint8Array(n), regUsed = new Uint8Array(n);
+  let count = 0;
+  const rec = (r, prev) => {
+    if (r === n) { count++; return count >= limit; }
+    for (let c = 0; c < n; c++) {
+      if (colUsed[c] || (prev >= 0 && Math.abs(c - prev) <= 1)) continue;
+      const g = reg[r * n + c];
+      if (regUsed[g]) continue;
+      colUsed[c] = 1; regUsed[g] = 1;
+      if (rec(r + 1, c)) return true;
+      colUsed[c] = 0; regUsed[g] = 0;
+    }
+    return false;
+  };
+  rec(0, -1);
+  return count;
+}
+// Returns some valid placement other than `sol`, or null when `sol` is the only one.
+function findOtherSolution(n, reg, sol) {
+  const colUsed = new Uint8Array(n), regUsed = new Uint8Array(n), cur = [];
+  let found = null;
+  const rec = (r, prev, same) => {
+    if (r === n) { if (!same) found = cur.slice(); return !same; }
+    for (let c = 0; c < n; c++) {
+      if (colUsed[c] || (prev >= 0 && Math.abs(c - prev) <= 1)) continue;
+      const g = reg[r * n + c];
+      if (regUsed[g]) continue;
+      colUsed[c] = 1; regUsed[g] = 1; cur[r] = c;
+      if (rec(r + 1, c, same && c === sol[r])) return true;
+      colUsed[c] = 0; regUsed[g] = 0;
+    }
+    return false;
+  };
+  rec(0, -1, true);
+  return found;
+}
+function regionStaysConnected(n, reg, without) {
+  const g = reg[without], cells = [];
+  for (let i = 0; i < n * n; i++) if (i !== without && reg[i] === g) cells.push(i);
+  if (!cells.length) return false;
+  const seen = new Set([cells[0]]), stack = [cells[0]];
+  while (stack.length) {
+    const i = stack.pop(), r = (i / n) | 0, c = i % n;
+    for (const j of [r > 0 ? i - n : -1, r < n - 1 ? i + n : -1, c > 0 ? i - 1 : -1, c < n - 1 ? i + 1 : -1]) {
+      if (j < 0 || j === without || reg[j] !== g || seen.has(j)) continue;
+      seen.add(j); stack.push(j);
+    }
+  }
+  return seen.size === cells.length;
+}
+// Moves one cell of a rival solution into a neighbouring blanket, which always breaks that rival.
+function repair(n, reg, sol, alt, rng) {
+  const isSol = new Uint8Array(n * n);
+  for (let r = 0; r < n; r++) isSol[r * n + sol[r]] = 1;
+  const cand = [];
+  for (let r = 0; r < n; r++) if (alt[r] !== sol[r]) cand.push(r * n + alt[r]);
+  for (const i of shuffle(cand, rng)) {
+    if (isSol[i]) continue;
+    const r = (i / n) | 0, c = i % n, opts = [];
+    for (const j of [r > 0 ? i - n : -1, r < n - 1 ? i + n : -1, c > 0 ? i - 1 : -1, c < n - 1 ? i + 1 : -1]) {
+      if (j >= 0 && reg[j] !== reg[i] && !opts.includes(reg[j])) opts.push(reg[j]);
+    }
+    if (!opts.length || !regionStaysConnected(n, reg, i)) continue;
+    reg[i] = opts[Math.floor(rng() * opts.length)];
+    return true;
+  }
+  return false;
+}
+// Tries a batch of candidate puzzles; returns {reg, sol} or null so the caller can yield between batches.
+function tryGenerate(n, rng, attempts) {
+  for (let k = 0; k < attempts; k++) {
+    const sol = randomSolution(n, rng);
+    const reg = growRegions(n, sol, rng);
+    for (let fix = 0; fix < n * 6; fix++) {
+      const alt = findOtherSolution(n, reg, sol);
+      if (!alt) return { reg, sol };
+      if (!repair(n, reg, sol, alt, rng)) break;
+    }
+  }
+  return null;
+}
+// LOGIC END
+
+(() => {
+  const EMPTY = 0, X = 1, CAT = 2;
+  const MODES = [
+    { id: 'daily', label: 'Dzienna', n: 8 },
+    { id: 's6', label: '6×6', n: 6 },
+    { id: 's7', label: '7×7', n: 7 },
+    { id: 's8', label: '8×8', n: 8 },
+    { id: 's9', label: '9×9', n: 9 },
+    { id: 's10', label: '10×10', n: 10 },
+  ];
+  const LS = 'kocie-koce-v1';
+  const $ = (id) => document.getElementById(id);
+  const board = $('board'), lines = $('lines'), wrap = $('wrap');
+
+  let S;          // persisted: { mode, games, best, streak:{cur,best}, settings }
+  let G = null;   // current game (also lives in S.games[mode])
+  let undo = [], redo = [];
+  let cellEls = [], viewCache = [];
+  let cursor = 0;
+  let generating = 0;
+
+  const fresh = () => ({ mode: 's8', games: {}, best: {}, streak: { cur: 0, best: 0 }, settings: { autoX: true, vibe: true } });
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} };
+  const load = () => { try { const v = localStorage.getItem(LS); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const fmt = (ms) => {
+    const s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+    return m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`;
+  };
+  const vibe = (ms) => { if (!S.settings.vibe) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+  let toastT;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200);
+  }
+
+  // ---------- modes ----------
+  function renderModes() {
+    const nav = $('modes'); nav.innerHTML = '';
+    for (const m of MODES) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = m.label; b.id = 'mode-' + m.id;
+      b.setAttribute('aria-pressed', String(S.mode === m.id));
+      b.addEventListener('click', () => switchMode(m.id));
+      nav.appendChild(b);
+    }
+  }
+  function switchMode(id) {
+    if (generating) return;
+    S.mode = id; renderModes(); save();
+    const g = S.games[id];
+    if (g && (id !== 'daily' || g.daily === today())) startGame(g);
+    else newGame(id);
+  }
+
+  // ---------- generation ----------
+  function newGame(modeId) {
+    const mode = MODES.find((m) => m.id === modeId);
+    const daily = modeId === 'daily' ? today() : null;
+    const seed = daily ? hashStr('kocie-koce/' + daily) : (Math.random() * 2 ** 32) >>> 0;
+    const rng = mulberry32(seed);
+    const token = ++generating;
+    $('gen').hidden = false;
+    const step = () => {
+      if (token !== generating) return;
+      const res = tryGenerate(mode.n, rng, 4);
+      if (!res) { setTimeout(step, 0); return; }
+      generating = 0; $('gen').hidden = true;
+      const g = { mode: modeId, n: mode.n, reg: res.reg, sol: res.sol, cells: new Array(mode.n * mode.n).fill(EMPTY),
+        elapsed: 0, oops: 0, hints: 0, done: false, daily };
+      S.games[modeId] = g; save();
+      startGame(g);
+    };
+    setTimeout(step, 30);
+  }
+
+  // ---------- board ----------
+  function startGame(g) {
+    G = g; undo = []; redo = [];
+    const n = G.n;
+    board.style.setProperty('--n', n);
+    board.innerHTML = ''; cellEls = []; viewCache = [];
+    for (let i = 0; i < n * n; i++) {
+      const d = document.createElement('div');
+      d.className = 'c'; d.setAttribute('role', 'gridcell');
+      d.style.background = `var(--r${G.reg[i] % 10})`;
+      board.appendChild(d); cellEls.push(d); viewCache.push('');
+    }
+    drawLines();
+    cursor = Math.min(cursor, n * n - 1);
+    wrap.classList.toggle('won', G.done);
+    $('win').hidden = true;
+    render(); renderStatus(); updateButtons();
+  }
+  function drawLines() {
+    const n = G.n; let thin = '', thick = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const i = r * n + c;
+      if (c < n - 1) { const seg = `M${c + 1} ${r}V${r + 1}`; G.reg[i] !== G.reg[i + 1] ? thick += seg : thin += seg; }
+      if (r < n - 1) { const seg = `M${c} ${r + 1}H${c + 1}`; G.reg[i] !== G.reg[i + n] ? thick += seg : thin += seg; }
+    }
+    lines.setAttribute('viewBox', `0 0 ${n} ${n}`);
+    lines.innerHTML =
+      `<path d="${thin}" stroke="var(--edge)" stroke-opacity=".18" stroke-width="1" vector-effect="non-scaling-stroke" fill="none"/>` +
+      `<path d="${thick}" stroke="var(--edge)" stroke-width="3" stroke-linecap="square" vector-effect="non-scaling-stroke" fill="none"/>`;
+  }
+  function blockedMap() {
+    const n = G.n, blk = new Uint8Array(n * n);
+    if (!S.settings.autoX || G.done) return blk;
+    for (let i = 0; i < n * n; i++) {
+      if (G.cells[i] !== CAT) continue;
+      const r = (i / n) | 0, c = i % n, g = G.reg[i];
+      for (let j = 0; j < n * n; j++) {
+        const rr = (j / n) | 0, cc = j % n;
+        if (rr === r || cc === c || G.reg[j] === g || (Math.abs(rr - r) <= 1 && Math.abs(cc - c) <= 1)) blk[j] = 1;
+      }
+    }
+    return blk;
+  }
+  function render() {
+    const blk = blockedMap();
+    for (let i = 0; i < cellEls.length; i++) {
+      const s = G.cells[i];
+      const key = s === CAT ? 'cat' : s === X ? 'x' : blk[i] ? 'ax' : '';
+      const full = key + (i === cursor ? ' cur' : '');
+      if (viewCache[i] === full) continue;
+      const el = cellEls[i];
+      const keepAnim = el.classList.contains('oops') || el.classList.contains('flash');
+      if (viewCache[i].split(' ')[0] !== key) {
+        el.innerHTML = key === 'cat' ? '<svg><use href="#i-cat"/></svg>' : (key === 'x' || key === 'ax') ? '<svg><use href="#i-x"/></svg>' : '';
+      }
+      el.className = 'c' + (key ? ' ' + key : '') + (i === cursor ? ' cur' : '') + (keepAnim ? (el.classList.contains('oops') ? ' oops' : ' flash') : '');
+      viewCache[i] = full;
+    }
+  }
+  function renderStatus() {
+    const cats = G.cells.filter((s) => s === CAT).length;
+    $('count').textContent = `${cats}/${G.n}`;
+    $('oops').innerHTML = G.oops ? `<span class="oops">wtopy: ${G.oops}</span>` : (G.hints ? `podpowiedzi: ${G.hints}` : '');
+    const b = S.best[G.mode];
+    $('best').textContent = G.mode === 'daily' ? G.daily.slice(5).split('-').reverse().join('.') : (b ? `rekord ${fmt(b)}` : '');
+    $('streakCur').textContent = S.streak.cur;
+    $('streakBest').textContent = S.streak.best;
+    $('streak').classList.toggle('broken', !G.done && (G.oops > 0 || G.hints > 0));
+  }
+  function updateButtons() {
+    $('bUndo').disabled = !undo.length || G.done;
+    $('bRedo').disabled = !redo.length || G.done;
+    $('bHint').disabled = G.done;
+    $('bClear').disabled = G.done || !G.cells.includes(X);
+    $('bNew').disabled = G.mode === 'daily';
+  }
+
+  // ---------- moves ----------
+  function flashCell(i, cls) {
+    const el = cellEls[i]; el.classList.remove('oops', 'flash'); void el.offsetWidth; el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), cls === 'flash' ? 2400 : 700);
+  }
+  function breakStreak() {
+    if (S.streak.cur > 0) toast(`Passa ${S.streak.cur} przerwana`);
+    S.streak.cur = 0;
+  }
+  // Places a cat; returns false (and records a mistake) when the cat cannot sleep there.
+  function placeCat(i) {
+    const r = (i / G.n) | 0, c = i % G.n;
+    if (G.sol[r] === c) { G.cells[i] = CAT; vibe(12); return true; }
+    G.cells[i] = X; G.oops++;
+    const hadStreak = S.streak.cur > 0;
+    breakStreak();
+    flashCell(i, 'oops');
+    vibe([30, 40, 30]);
+    if (!hadStreak) toast('Wtopa. Tu kot nie zaśnie.');
+    return false;
+  }
+  function commit(before) {
+    const changed = before.some((v, i) => v !== G.cells[i]);
+    if (changed) { undo.push(before); if (undo.length > 300) undo.shift(); redo = []; }
+    render(); renderStatus(); updateButtons(); save();
+    checkWin();
+  }
+  function checkWin() {
+    if (G.done) return;
+    if (G.cells.filter((s) => s === CAT).length !== G.n) return;
+    G.done = true;
+    tickTimer();
+    const clean = G.oops === 0 && G.hints === 0;
+    if (clean) {
+      S.streak.cur++;
+      S.streak.best = Math.max(S.streak.best, S.streak.cur);
+      const s = $('streak'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump');
+    }
+    let record = false;
+    if (G.mode !== 'daily' && clean && (!S.best[G.mode] || G.elapsed < S.best[G.mode])) { S.best[G.mode] = G.elapsed; record = true; }
+    for (let i = 0; i < G.n * G.n; i++) if (G.cells[i] === X) G.cells[i] = EMPTY;
+    viewCache = viewCache.map(() => '#');
+    render(); renderStatus(); updateButtons(); save();
+    wrap.classList.add('won');
+    vibe([20, 60, 20, 60, 40]);
+    $('winTime').textContent = fmt(G.elapsed);
+    $('winInfo').textContent = clean
+      ? (record ? `Nowy rekord dla ${G.n}×${G.n}. ` : '') + `Bez wtopy. Passa: ${S.streak.cur}.`
+      : `Wtopy: ${G.oops}, podpowiedzi: ${G.hints}. Passa wraca do zera.`;
+    $('winNext').textContent = G.mode === 'daily' ? 'Zagraj 8×8' : 'Następna plansza';
+    setTimeout(() => { $('win').hidden = false; $('winNext').focus(); }, 450);
+  }
+
+  // ---------- pointer input ----------
+  let drag = null;
+  let rect = null;
+  function cellAt(x, y) {
+    if (!rect) return -1;
+    const n = G.n;
+    const c = Math.floor((x - rect.left) / (rect.width / n));
+    const r = Math.floor((y - rect.top) / (rect.height / n));
+    if (r < 0 || c < 0 || r >= n || c >= n) return -1;
+    return r * n + c;
+  }
+  function lineCells(a, b) {
+    const n = G.n, out = [];
+    let r0 = (a / n) | 0, c0 = a % n; const r1 = (b / n) | 0, c1 = b % n;
+    const dr = Math.abs(r1 - r0), dc = Math.abs(c1 - c0), sr = r0 < r1 ? 1 : -1, sc = c0 < c1 ? 1 : -1;
+    let err = dc - dr;
+    for (;;) {
+      out.push(r0 * n + c0);
+      if (r0 === r1 && c0 === c1) break;
+      const e2 = 2 * err;
+      if (e2 > -dr) { err -= dr; c0 += sc; }
+      if (e2 < dc) { err += dc; r0 += sr; }
+    }
+    return out;
+  }
+  function paint(i) {
+    if (drag.mode === 'mark' && G.cells[i] === EMPTY) G.cells[i] = X;
+    else if (drag.mode === 'erase' && G.cells[i] === X) G.cells[i] = EMPTY;
+  }
+  board.addEventListener('pointerdown', (e) => {
+    if (!G || G.done || generating || drag) return;
+    if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
+    rect = board.getBoundingClientRect();
+    const i = cellAt(e.clientX, e.clientY);
+    if (i < 0) return;
+    e.preventDefault();
+    try { board.setPointerCapture(e.pointerId); } catch (err) {}
+    const start = G.cells[i];
+    drag = { id: e.pointerId, start: i, startState: start, last: i, moved: false, before: G.cells.slice(), mode: null, right: e.button === 2 };
+    cursor = i;
+    if (start === EMPTY) { G.cells[i] = X; drag.mode = 'mark'; }
+    else if (drag.right && start === X) { G.cells[i] = EMPTY; drag.mode = 'erase'; }
+    render();
+  });
+  board.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    const pts = evs.length ? evs : [e];
+    let changed = false;
+    for (const p of pts) {
+      const i = cellAt(p.clientX, p.clientY);
+      if (i < 0 || i === drag.last) continue;
+      if (!drag.moved) {
+        drag.moved = true;
+        if (!drag.mode) {
+          drag.mode = 'erase';
+          if (drag.startState === X) G.cells[drag.start] = EMPTY;
+        }
+      }
+      for (const j of lineCells(drag.last, i)) paint(j);
+      drag.last = i; cursor = i; changed = true;
+    }
+    if (changed) render();
+  });
+  function endDrag(e, cancelled) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.moved && !cancelled && !d.right) {
+      if (d.startState === X) placeCat(d.start);
+      else if (d.startState === CAT) G.cells[d.start] = EMPTY;
+    }
+    commit(d.before);
+  }
+  board.addEventListener('pointerup', (e) => endDrag(e, false));
+  board.addEventListener('pointercancel', (e) => endDrag(e, true));
+  board.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('resize', () => { rect = null; });
+
+  // ---------- keyboard ----------
+  board.addEventListener('keydown', (e) => {
+    if (!G || G.done) return;
+    const n = G.n; let r = (cursor / n) | 0, c = cursor % n;
+    const k = e.key;
+    if (k.startsWith('Arrow')) {
+      if (k === 'ArrowUp') r = Math.max(0, r - 1);
+      if (k === 'ArrowDown') r = Math.min(n - 1, r + 1);
+      if (k === 'ArrowLeft') c = Math.max(0, c - 1);
+      if (k === 'ArrowRight') c = Math.min(n - 1, c + 1);
+      cursor = r * n + c; render(); e.preventDefault(); return;
+    }
+    const before = G.cells.slice(), s = G.cells[cursor];
+    if (k === ' ' || k === 'Enter') { if (s === EMPTY) G.cells[cursor] = X; else if (s === X) placeCat(cursor); else G.cells[cursor] = EMPTY; }
+    else if (k === 'x' || k === 'X') { if (s !== CAT) G.cells[cursor] = s === X ? EMPTY : X; }
+    else if (k === 'c' || k === 'C') { if (s === CAT) G.cells[cursor] = EMPTY; else placeCat(cursor); }
+    else if (k === 'Backspace' || k === 'Delete') { G.cells[cursor] = EMPTY; }
+    else return;
+    e.preventDefault(); commit(before);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); }
+    else if (e.key === 'y' || (e.key === 'z' && e.shiftKey) || e.key === 'Z') { e.preventDefault(); doRedo(); }
+  });
+
+  // ---------- tools ----------
+  function doUndo() {
+    if (!G || G.done || !undo.length) return;
+    redo.push(G.cells.slice()); G.cells = undo.pop();
+    render(); renderStatus(); updateButtons(); save();
+  }
+  function doRedo() {
+    if (!G || G.done || !redo.length) return;
+    undo.push(G.cells.slice()); G.cells = redo.pop();
+    render(); renderStatus(); updateButtons(); save();
+  }
+  $('bUndo').addEventListener('click', doUndo);
+  $('bRedo').addEventListener('click', doRedo);
+  $('bClear').addEventListener('click', () => {
+    if (G.done) return;
+    const before = G.cells.slice();
+    G.cells = G.cells.map((s) => (s === X ? EMPTY : s));
+    commit(before);
+    toast('Krzyżyki zmazane, koty zostały');
+  });
+  $('bHint').addEventListener('click', () => {
+    if (!G || G.done) return;
+    const n = G.n, before = G.cells.slice();
+    G.hints++;
+    breakStreak();
+    // An × sitting on a cat's spot is the most misleading mistake, so point at it first.
+    for (let r = 0; r < n; r++) {
+      const i = r * n + G.sol[r];
+      if (G.cells[i] === X) { G.cells[i] = EMPTY; commit(before); flashCell(i, 'flash'); toast('Tu nie powinno być ×. Ktoś tu śpi.'); return; }
+    }
+    // Otherwise lay down the cat of the smallest blanket that still lacks one.
+    const size = new Array(n).fill(0);
+    for (const g of G.reg) size[g]++;
+    let pick = -1;
+    for (let r = 0; r < n; r++) {
+      const i = r * n + G.sol[r];
+      if (G.cells[i] === CAT) continue;
+      if (pick < 0 || size[G.reg[i]] < size[G.reg[pick]]) pick = i;
+    }
+    if (pick < 0) return;
+    G.cells[pick] = CAT;
+    commit(before); flashCell(pick, 'flash');
+    toast('Ten kot śpi tutaj');
+  });
+  let armT = null;
+  $('bNew').addEventListener('click', () => {
+    if (!G || G.mode === 'daily' || generating) return;
+    const b = $('bNew');
+    const inProgress = !G.done && G.cells.some((s) => s !== EMPTY);
+    if (inProgress && !b.classList.contains('armed')) {
+      b.classList.add('armed'); b.lastChild.textContent = 'Na pewno?';
+      clearTimeout(armT);
+      armT = setTimeout(() => { b.classList.remove('armed'); b.lastChild.textContent = 'Nowa'; }, 3000);
+      return;
+    }
+    clearTimeout(armT); b.classList.remove('armed'); b.lastChild.textContent = 'Nowa';
+    newGame(G.mode);
+  });
+  $('winClose').addEventListener('click', () => { $('win').hidden = true; });
+  $('winNext').addEventListener('click', () => {
+    $('win').hidden = true;
+    if (G.mode === 'daily') switchMode('s8'); else newGame(G.mode);
+  });
+
+  // ---------- rules sheet ----------
+  const openSheet = () => { $('sheet').hidden = false; };
+  const closeSheet = () => { $('sheet').hidden = true; try { localStorage.setItem(LS + '-seen', '1'); } catch (e) {} };
+  $('bMenu').addEventListener('click', openSheet);
+  $('sheetClose').addEventListener('click', closeSheet);
+  $('sheetBackdrop').addEventListener('click', closeSheet);
+
+  // ---------- settings ----------
+  function bindSettings() {
+    const a = $('optAuto'), v = $('optVibe');
+    a.checked = S.settings.autoX; v.checked = S.settings.vibe;
+    a.addEventListener('change', () => { S.settings.autoX = a.checked; save(); if (G) render(); });
+    v.addEventListener('change', () => { S.settings.vibe = v.checked; save(); });
+  }
+
+  // ---------- timer ----------
+  let lastTick = performance.now();
+  function tickTimer() {
+    const now = performance.now();
+    if (G && !G.done && !generating && document.visibilityState === 'visible' && $('win').hidden && $('sheet').hidden) G.elapsed += now - lastTick;
+    lastTick = now;
+    if (G) $('timer').textContent = fmt(G.elapsed);
+  }
+  setInterval(tickTimer, 500);
+  document.addEventListener('visibilitychange', () => { tickTimer(); save(); });
+  window.addEventListener('pagehide', save);
+
+  // ---------- boot ----------
+  function start(data) {
+    S = (data && data.S) || load() || fresh();
+    const def = fresh();
+    S.settings = Object.assign(def.settings, S.settings || {});
+    S.streak = Object.assign(def.streak, S.streak || {});
+    S.best = S.best || {}; S.games = S.games || {};
+    if (!MODES.some((m) => m.id === S.mode)) S.mode = 's8';
+    renderModes(); bindSettings();
+    switchMode(S.mode);
+    let seen = false;
+    try { seen = !!localStorage.getItem(LS + '-seen'); } catch (e) {}
+    if (!seen) openSheet();
+  }
+  start({});
+})();
+</script>
+</body>
+</html>

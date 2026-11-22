@@ -1,0 +1,17 @@
+{
+  "name": "Kocie Koce",
+  "short_name": "Kocie Koce",
+  "description": "Logiczna gra z kotami: na każdym kocu śpi jeden kot.",
+  "lang": "pl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16131C",
+  "theme_color": "#5B3A9B",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
