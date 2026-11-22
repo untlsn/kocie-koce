@@ -109,6 +109,24 @@
     return seen.size === cells.length;
   }
 
+  // True when every blanket is one piece.
+  function regionsConnected(n, reg) {
+    const seen = new Uint8Array(n * n), pieces = new Map();
+    for (let i = 0; i < n * n; i++) {
+      if (seen[i]) continue;
+      const g = reg[i];
+      if (pieces.has(g)) return false;
+      pieces.set(g, 1);
+      seen[i] = 1;
+      const stack = [i];
+      while (stack.length) {
+        const k = stack.pop();
+        for (const j of orth(n, k)) if (!seen[j] && reg[j] === g) { seen[j] = 1; stack.push(j); }
+      }
+    }
+    return true;
+  }
+
   // Moves one cell of a rival solution into a neighbouring blanket, which always breaks that rival.
   // Never shrinks a blanket below `minSize`.
   function repair(n, reg, size, sol, alt, rng, minSize) {
@@ -134,11 +152,17 @@
     };
     for (const i of shuffle(cand, rng)) {
       if (isSol[i]) continue;
-      const opts = [];
-      for (const j of orth(n, i)) if (reg[j] !== reg[i] && !opts.includes(reg[j])) opts.push(reg[j]);
-      if (!opts.length) continue;
+      const neighbours = () => {
+        const out = [];
+        for (const j of orth(n, i)) if (reg[j] !== reg[i] && !out.includes(reg[j])) out.push(reg[j]);
+        return out;
+      };
+      if (!neighbours().length) continue;
       if (size[reg[i]] <= minSize && !borrow(reg[i])) continue;
       if (!regionStaysConnected(n, reg, i)) continue;
+      // Read the neighbours only now: a borrow may have taken one of them over.
+      const opts = neighbours();
+      if (!opts.length) continue;
       const to = opts[Math.floor(rng() * opts.length)];
       size[reg[i]]--; size[to]++; reg[i] = to;
       return true;
@@ -153,7 +177,7 @@
     if (Math.min(...size) < minSize) return null;
     for (let fix = 0; fix < n * 8; fix++) {
       const alt = findOtherSolution(n, reg, sol);
-      if (!alt) return { reg, sol, minRegion: Math.min(...size) };
+      if (!alt) return regionsConnected(n, reg) ? { reg, sol, minRegion: Math.min(...size) } : null;
       if (!repair(n, reg, size, sol, alt, rng, minSize)) return null;
     }
     return null;
@@ -383,5 +407,5 @@
     };
   }
 
-  root.KK = { mulberry32, hashStr, shuffle, randomSolution, growRegions, uniqueBoard, findOtherSolution, rate, classify, chooseGiven, generator, DIFFS };
+  root.KK = { mulberry32, hashStr, shuffle, randomSolution, growRegions, regionsConnected, uniqueBoard, findOtherSolution, rate, classify, chooseGiven, generator, DIFFS };
 })(typeof self !== 'undefined' ? self : globalThis);

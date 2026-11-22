@@ -525,8 +525,10 @@
     const def = fresh();
     S = load() || def;
     // Boards from the first version had no revealed cat and no rating; drop them, keep the streak.
-    S.games = Object.fromEntries(Object.entries(S.games || {}).filter(([, g]) => g && g.v === 2));
-    S.next = Object.fromEntries(Object.entries(S.next || {}).filter(([, g]) => g && g.v === 2));
+    // Older builds could split a blanket in two; such boards are dropped too.
+    const sound = (g) => g && g.v === 2 && KK.regionsConnected(g.n, g.reg);
+    S.games = Object.fromEntries(Object.entries(S.games || {}).filter(([, g]) => sound(g)));
+    S.next = Object.fromEntries(Object.entries(S.next || {}).filter(([, g]) => sound(g)));
     S.settings = Object.assign(def.settings, S.settings || {});
     if (!['auto', 'light', 'dark'].includes(S.settings.theme)) S.settings.theme = 'auto';
     S.streak = Object.assign(def.streak, S.streak || {});
