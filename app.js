@@ -61,7 +61,9 @@
       setTimeout(step, 0);
     });
     try {
-      worker = new Worker('worker.js');
+      // Carry the page's ?v= so the worker and its logic.js never come from a stale cache.
+      const v = (document.currentScript || document.querySelector('script[src^="app.js"]')).src.split('?')[1] || '';
+      worker = new Worker('worker.js' + (v ? '?' + v : ''));
       worker.onmessage = (e) => {
         const p = pending.get(e.data.id);
         if (p) { pending.delete(e.data.id); p.resolve(e.data.puzzle); }
@@ -478,9 +480,9 @@
     a.addEventListener('change', () => { S.settings.autoX = a.checked; save(); if (G) render(); });
     v.addEventListener('change', () => { S.settings.vibe = v.checked; save(); });
     applyTheme();
+    // The header button always flips what is on screen; "auto" lives only in the settings sheet.
     $('bTheme').addEventListener('click', () => {
-      const order = ['auto', 'light', 'dark'];
-      setTheme(order[(order.indexOf(S.settings.theme) + 1) % order.length]);
+      setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
       toast(`Motyw: ${THEME_LABEL[S.settings.theme].toLowerCase()}`);
     });
     for (const b of document.querySelectorAll('[data-theme-opt]')) b.addEventListener('click', () => setTheme(b.dataset.themeOpt));
@@ -490,16 +492,18 @@
   const THEME_LABEL = { auto: 'Auto', light: 'Jasny', dark: 'Ciemny' };
   const THEME_BG = { light: '#F8F4EE', dark: '#1C1916' };
   const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const effectiveTheme = () => (S.settings.theme === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : S.settings.theme);
   function setTheme(t) { S.settings.theme = t; save(); applyTheme(); }
   function applyTheme() {
     const t = S.settings.theme;
     const root = document.documentElement;
     if (t === 'auto') delete root.dataset.theme; else root.dataset.theme = t;
-    const eff = t === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : t;
+    const eff = effectiveTheme();
     for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = t === 'auto' ? THEME_BG[m.media.includes('dark') ? 'dark' : 'light'] : THEME_BG[eff];
+    // The icon shows the theme a tap switches to.
     const btn = $('bTheme');
-    btn.dataset.mode = t;
-    btn.setAttribute('aria-label', `Motyw: ${THEME_LABEL[t]}`);
+    btn.dataset.mode = eff === 'dark' ? 'light' : 'dark';
+    btn.setAttribute('aria-label', eff === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw');
     for (const b of document.querySelectorAll('[data-theme-opt]')) b.setAttribute('aria-pressed', String(b.dataset.themeOpt === t));
   }
   darkQuery.addEventListener('change', () => { if (S.settings.theme === 'auto') applyTheme(); });
