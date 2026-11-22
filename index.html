@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F0EEF4">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16131C">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F8F4EE">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1C1916">
 <meta name="description" content="Logiczna gra z kotami: na każdym kocu śpi jeden kot.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,40 +16,40 @@
 <title>Kocie Koce</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap">
 <style>
-/* Layout: one-screen phone app — difficulty and size chips, status strip, square board of wool blankets, thumb-reach toolbar */
+/* Layout: one cream phone screen — streak and help on top, pill pickers, a white card holding the tiled board and a message line, round tools at thumb reach */
 :root {
-  --bg: #F0EEF4;
+  --bg: #F8F4EE;
   --surface: #FFFFFF;
-  --ink: #29233A;
-  --muted: #6D6680;
-  --accent: #5B3A9B;
-  --accent-ink: #FFFFFF;
-  --edge: #29233A;
-  --cat: #29233A;
-  --cat-face: #F7F3EC;
-  --mark: rgba(41, 35, 58, .62);
-  --automark: rgba(41, 35, 58, .2);
-  --bad: #C4372E;
-  --good: #2F7D4F;
-  --chip: #E3DFEB;
-  --halo: rgba(255, 255, 255, .55);
-  --r0: #F2D27A; --r1: #A9C9A0; --r2: #EBA9A3; --r3: #9FBADB; --r4: #CBAAD9;
-  --r5: #F3B680; --r6: #8FD0C4; --r7: #DACCA6; --r8: #B7B9EA; --r9: #E8ABCB;
+  --line: #EFE6DC;
+  --ink: #4A3B38;
+  --muted: #8C7B74;
+  --strong: #3A2D2A;
+  --strong-ink: #FFFFFF;
+  --accent: #E07A8F;
+  --mark: rgba(58, 40, 36, .62);
+  --automark: rgba(58, 40, 36, .22);
+  --bad: #D9483B;
+  --good: #4F9A5C;
+  --tile-shadow: 0 1px 2px rgba(80, 50, 40, .14), inset 0 -2px 0 rgba(0, 0, 0, .06);
+  --pillow: rgba(255, 255, 255, .5);
+  --pillow-ring: rgba(255, 255, 255, .95);
+  --r0: #67C5BF; --r1: #DE87CB; --r2: #E8C84F; --r3: #C9A584; --r4: #6CB4DC;
+  --r5: #93CC7E; --r6: #F2A65E; --r7: #A795E0; --r8: #EE8B80; --r9: #B9C46A;
   --f-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
   --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16131C; --surface: #221E2B; --ink: #EEE9F5; --muted: #A49DB3;
-    --accent: #B996EA; --accent-ink: #1A1422; --edge: #0B0910;
-    --cat: #F6F1FB; --cat-face: #221E2B;
-    --mark: rgba(255, 255, 255, .78); --automark: rgba(255, 255, 255, .26);
-    --bad: #FF7A6E; --good: #6FD39A; --chip: #2D2838;
-    --halo: rgba(0, 0, 0, .28);
-    --r0: #8A7436; --r1: #5D7D56; --r2: #8F5A56; --r3: #4E6A8F; --r4: #73588A;
-    --r5: #94633A; --r6: #3E7E75; --r7: #7A7058; --r8: #5D5F9A; --r9: #8C5476;
+    --bg: #1C1916; --surface: #2A2521; --line: #3A332D; --ink: #F1E8E1; --muted: #AE9F95;
+    --strong: #F1E8E1; --strong-ink: #2A2521; --accent: #F09AAC;
+    --mark: rgba(30, 20, 16, .72); --automark: rgba(30, 20, 16, .3);
+    --bad: #FF8073; --good: #7FCB8B;
+    --tile-shadow: 0 1px 2px rgba(0, 0, 0, .4), inset 0 -2px 0 rgba(0, 0, 0, .12);
+    --pillow: rgba(255, 255, 255, .32); --pillow-ring: rgba(255, 255, 255, .75);
+    --r0: #4FA8A2; --r1: #C06DAD; --r2: #C9AA3A; --r3: #A58566; --r4: #5398C0;
+    --r5: #77AE63; --r6: #D08A45; --r7: #8C7AC3; --r8: #CF7066; --r9: #9CA752;
     color-scheme: dark;
   }
 }
@@ -74,162 +74,194 @@ body {
   padding-right: max(14px, env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; gap: 10px;
 }
+
+/* ----- header ----- */
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.top .title { text-align: center; }
+h1 {
+  font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: -.01em;
+  margin: 0; line-height: 1; color: var(--ink); white-space: nowrap;
+}
+.kicker { font-weight: 800; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.pill {
+  background: var(--surface); border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(80, 50, 40, .12), 0 0 0 1px var(--line);
+}
+.streak {
+  justify-self: start;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px 5px 6px;
+  font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--good);
+}
+.streak .face { width: 30px; height: 30px; }
+.streak small { font-weight: 700; font-size: 12px; color: var(--muted); }
+.streak.broken { color: var(--muted); }
+.streak.broken .face { filter: grayscale(.8); opacity: .7; }
+.streak.bump { animation: bump .45s ease; }
+@keyframes bump { 30% { transform: scale(1.14); } }
+.round {
+  justify-self: end;
+  width: 42px; height: 42px; border: 0; cursor: pointer; display: grid; place-items: center;
+  color: var(--ink); font: 800 17px var(--f-body);
+}
+.round svg { width: 20px; height: 20px; }
+
+/* ----- pickers ----- */
+.picker { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.seg { display: flex; padding: 4px; gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg::-webkit-scrollbar { display: none; }
+.seg button {
+  flex: 0 0 auto; border: 0; cursor: pointer; background: transparent; color: var(--muted);
+  font: 800 min(12px, 3.1vw) var(--f-body); letter-spacing: .05em; text-transform: uppercase;
+  padding: 10px min(11px, 2.4vw); border-radius: 999px; font-variant-numeric: tabular-nums;
+}
+.seg.sizes button { padding: 7px min(11px, 2.6vw); font-size: 12.5px; letter-spacing: .02em; }
+.seg button[aria-pressed="true"] { background: var(--strong); color: var(--strong-ink); }
+.daily-note { font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 7px 12px; }
+.seg button:focus-visible, .tools button:focus-visible, .btn:focus-visible, .round:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ----- card with board ----- */
 .stage {
   flex: 1 1 auto; min-height: 0;
   container-type: size;
-  display: flex; flex-direction: column; justify-content: safe center; align-items: center; gap: 8px;
+  display: flex; flex-direction: column; justify-content: safe center; align-items: center;
 }
-.stage .status { width: min(100cqw, calc(100cqh - 30px)); }
-.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-h1 {
-  font-family: var(--f-display); font-weight: 800; font-size: 30px; letter-spacing: -.02em;
-  margin: 0; line-height: 1; text-wrap: balance;
+.card {
+  --pad: 12px;
+  --bs: min(calc(100cqw - 2 * var(--pad)), calc(100cqh - 2 * var(--pad) - 82px));
+  background: var(--surface); border-radius: 26px;
+  box-shadow: 0 8px 30px -14px rgba(80, 50, 40, .35), 0 0 0 1px var(--line);
+  padding: var(--pad); display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: calc(var(--bs) + 2 * var(--pad));
 }
-h1 span { color: var(--accent); }
-.streak {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
-  background: var(--surface); border-radius: 999px; padding: 6px 12px 6px 8px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.06);
-}
-.streak .paw { width: 22px; height: 22px; color: var(--accent); }
-.streak.broken .paw { color: var(--muted); }
-.streak small { font-weight: 500; color: var(--muted); }
-.streak.bump { animation: bump .45s ease; }
-@keyframes bump { 30% { transform: scale(1.14); } }
-
-.picker { display: flex; flex-direction: column; gap: 6px; }
-.modes { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-height: 33px; align-items: center; }
-.modes::-webkit-scrollbar { display: none; }
-.modes button {
-  flex: 0 0 auto; border: 0; cursor: pointer;
-  font: 600 14px var(--f-body); color: var(--ink);
-  background: var(--chip); padding: 8px 13px; border-radius: 999px;
-  font-variant-numeric: tabular-nums;
-}
-.modes.sizes button { padding: 6px 11px; font-size: 13px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--chip); }
-.modes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
-.modes button.daily { margin-left: auto; }
-.daily-note { font-size: 13px; color: var(--muted); font-weight: 600; padding-left: 2px; }
-.modes button:focus-visible, .tools button:focus-visible, .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-
 .status {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 20px;
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 13.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums;
+  min-height: 22px; padding: 0 4px;
 }
-.status b { color: var(--ink); font-weight: 700; }
+.status b { color: var(--ink); font-weight: 800; }
 .status .left, .status .right { display: flex; gap: 14px; align-items: center; }
-.oops { color: var(--bad); font-weight: 700; }
+.oops { color: var(--bad); font-weight: 800; }
 
-.board-wrap {
-  position: relative;
-  width: min(100cqw, calc(100cqh - 30px)); height: min(100cqw, calc(100cqh - 30px)); flex: 0 0 auto;
-  border: 3px solid var(--edge); border-radius: 12px; overflow: hidden;
-  box-shadow: 0 10px 30px -12px rgba(30, 20, 50, .35);
-}
+.board-wrap { position: relative; width: var(--bs); height: var(--bs); flex: 0 0 auto; }
 #board {
-  position: absolute; inset: 0; display: grid;
+  --gap: calc(var(--bs) / var(--n, 8) * .1);
+  position: absolute; inset: 0; display: grid; gap: var(--gap);
   grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
   grid-template-rows: repeat(var(--n, 8), minmax(0, 1fr));
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   outline: none; cursor: pointer;
 }
-#lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.c { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
-.c svg { position: absolute; left: 14%; top: 14%; width: 72%; height: 72%; display: block; pointer-events: none; }
-.c.x svg, .c.ax svg { left: 29%; top: 29%; width: 42%; height: 42%; }
+.c {
+  position: relative; min-width: 0; min-height: 0;
+  border-radius: 22%; box-shadow: var(--tile-shadow);
+  transition: transform .08s;
+}
+.c svg { position: absolute; left: 11%; top: 11%; width: 78%; height: 78%; display: block; pointer-events: none; }
+.c.x svg, .c.ax svg { left: 31%; top: 31%; width: 38%; height: 38%; }
 .c.x { color: var(--mark); }
 .c.ax { color: var(--automark); }
-.c.cat { color: var(--cat); }
-.c.cat svg { animation: pop .18s cubic-bezier(.3, 1.6, .5, 1); }
-/* The revealed cat sits on a soft cushion so it reads as part of the puzzle, not a move. */
-.c.given::before {
-  content: ""; position: absolute; inset: 9%; border-radius: 50%;
-  background: var(--halo); box-shadow: inset 0 0 0 2px var(--edge);
+/* A cat lies on a pale pillow so it pops off any blanket colour. */
+.c.cat::before {
+  content: ""; position: absolute; inset: 7%; border-radius: 20%;
+  background: var(--pillow); box-shadow: inset 0 0 0 2px var(--pillow-ring);
 }
+.c.cat svg { animation: pop .2s cubic-bezier(.3, 1.6, .5, 1); }
+/* The revealed cat gets a stitched pillow so it reads as part of the puzzle, not a move. */
+.c.given::before { box-shadow: none; border: 2px dashed var(--pillow-ring); }
 .c.given svg { animation: none; }
-@keyframes pop { from { transform: scale(.55); } }
-.c.oops { color: var(--bad); }
+@keyframes pop { from { transform: scale(.5); } }
 .c.oops::after, .c.flash::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
   background: var(--bad); opacity: 0; animation: oops .7s ease;
 }
-.c.flash::after { background: var(--accent); animation-duration: 1.2s; animation-iteration-count: 2; }
-@keyframes oops { 20% { opacity: .45; } 100% { opacity: 0; } }
-#board:focus-visible .c.cur { box-shadow: inset 0 0 0 3px var(--accent); }
+.c.flash::after { background: #fff; animation-duration: 1.2s; animation-iteration-count: 2; }
+@keyframes oops { 20% { opacity: .55; } 100% { opacity: 0; } }
+#board:focus-visible .c.cur { box-shadow: var(--tile-shadow), 0 0 0 3px var(--strong); }
 .won .c.cat svg { animation: snooze 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
 @keyframes snooze { 50% { transform: scale(1.06, .94); } }
 
 .gen {
-  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  font: 700 16px var(--f-display); color: var(--ink);
+  position: absolute; inset: -4px; display: grid; place-items: center; text-align: center; padding: 16px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  font: 800 16px var(--f-display); color: var(--ink);
 }
+.msg {
+  width: 100%; min-height: 40px; display: grid; place-items: center; text-align: center;
+  padding: 8px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line);
+  font-weight: 700; font-size: 13.5px; color: var(--muted); line-height: 1.25;
+  transition: color .2s, background .2s;
+}
+.msg.on { color: var(--ink); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
-.tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; flex: 0 0 auto; }
+/* ----- tools ----- */
+.tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; flex: 0 0 auto; }
 .tools button {
-  display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
-  border: 0; background: var(--surface); color: var(--ink); cursor: pointer;
-  border-radius: 14px; padding: 10px 0 9px; font: 600 11.5px var(--f-body);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0;
+  border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 0;
+  font: 700 min(11px, 2.85vw) var(--f-body); color: var(--muted);
   touch-action: manipulation; white-space: nowrap;
 }
-.tools button svg { width: 24px; height: 24px; }
-.tools button:active:not(:disabled) { transform: scale(.94); }
-.tools button:disabled { opacity: .38; cursor: default; }
-.tools button.armed { background: var(--bad); color: #fff; }
+.tools .ico {
+  width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 1px 3px rgba(80, 50, 40, .14), 0 0 0 1px var(--line);
+  transition: transform .08s;
+}
+.tools button svg { width: 22px; height: 22px; }
+.tools button:active:not(:disabled) .ico { transform: scale(.92); }
+.tools button:disabled { opacity: .4; cursor: default; }
+.tools button.armed .ico { background: var(--bad); color: #fff; box-shadow: none; }
+.tools button.armed { color: var(--bad); }
 
+/* ----- sheet ----- */
 .sheet { position: fixed; inset: 0; z-index: 25; display: flex; flex-direction: column; justify-content: flex-end; }
-.sheet .backdrop { position: absolute; inset: 0; background: rgba(20, 14, 30, .45); }
+.sheet .backdrop { position: absolute; inset: 0; background: rgba(40, 25, 20, .4); }
 .sheet .panel {
   position: relative; background: var(--surface); color: var(--ink);
-  border-radius: 22px 22px 0 0; max-height: 86dvh; overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 26px 26px 0 0; max-height: 86dvh; overflow-y: auto; overscroll-behavior: contain;
   width: 100%; max-width: 480px; margin: 0 auto;
-  padding: 10px max(18px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  padding: 10px max(20px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
   animation: slide .22s cubic-bezier(.2, .9, .3, 1);
   user-select: text; -webkit-user-select: text;
 }
 @keyframes slide { from { transform: translateY(100%); } }
-.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--chip); margin: 0 auto 8px; }
-.sheet h2 { font: 800 20px var(--f-display); margin: 10px 0 4px; }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 8px; }
+.sheet h2 { font: 800 20px var(--f-display); margin: 12px 0 4px; }
 .sheet p, .sheet li { line-height: 1.5; margin: 6px 0; }
 .sheet ul { padding-left: 18px; margin: 4px 0 8px; }
 .sheet .btn { width: 100%; margin-top: 12px; }
+.sheet .hero { width: 84px; height: 84px; display: block; margin: 6px auto 0; }
 .muted { color: var(--muted); }
 .toggle { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; font-weight: 600; }
 .toggle input { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 auto; }
 
-.toast {
-  position: fixed; left: 50%; top: calc(132px + env(safe-area-inset-top, 0px));
-  transform: translate(-50%, -12px); opacity: 0; pointer-events: none;
-  background: var(--ink); color: var(--bg); font-weight: 600;
-  padding: 10px 16px; border-radius: 999px; max-width: calc(100% - 32px);
-  transition: opacity .18s, transform .18s; z-index: 20; text-align: center;
-}
-.toast.on { opacity: 1; transform: translate(-50%, 0); }
-
+/* ----- win ----- */
 .win {
   position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
-  background: rgba(20, 14, 30, .45);
+  background: rgba(40, 25, 20, .4);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.win .card {
-  background: var(--surface); color: var(--ink); border-radius: 20px;
-  padding: 24px 22px 20px; width: min(100%, 360px); text-align: center;
+.win .card-win {
+  background: var(--surface); color: var(--ink); border-radius: 26px;
+  padding: 22px 22px 20px; width: min(100%, 360px); text-align: center;
   display: flex; flex-direction: column; gap: 10px;
   animation: rise .3s cubic-bezier(.3, 1.4, .5, 1);
 }
 @keyframes rise { from { transform: translateY(24px) scale(.96); opacity: 0; } }
 .win h2 { font-family: var(--f-display); font-weight: 800; font-size: 26px; margin: 0; text-wrap: balance; }
 .win .big { font: 800 44px var(--f-display); font-variant-numeric: tabular-nums; color: var(--accent); line-height: 1; }
-.win .mode { font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.win .mode { font-weight: 800; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .win .row { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
+.win .cat-hero { width: 104px; height: 104px; margin: 0 auto; animation: snooze 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
 .btn {
-  border: 0; cursor: pointer; border-radius: 12px; padding: 12px 16px;
-  font: 700 15px var(--f-body); background: var(--chip); color: var(--ink);
+  border: 0; cursor: pointer; border-radius: 999px; padding: 13px 18px;
+  font: 800 15px var(--f-body); background: var(--bg); color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
-.btn.primary { background: var(--accent); color: var(--accent-ink); }
-.win .cat-hero { width: 72px; height: 72px; margin: 0 auto; color: var(--cat); }
+.btn.primary { background: var(--strong); color: var(--strong-ink); box-shadow: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -240,64 +272,96 @@ h1 span { color: var(--accent); }
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <radialGradient id="g-fur" cx="50%" cy="62%" r="58%">
+      <stop offset="0" stop-color="#FFFBF4"/>
+      <stop offset=".62" stop-color="#F6ECDF"/>
+      <stop offset="1" stop-color="#E2D2BF"/>
+    </radialGradient>
+    <radialGradient id="g-eye" cx="50%" cy="62%" r="55%">
+      <stop offset="0" stop-color="#C98A45"/>
+      <stop offset=".55" stop-color="#8A5428"/>
+      <stop offset="1" stop-color="#3E2414"/>
+    </radialGradient>
     <symbol id="i-cat" viewBox="0 0 100 100">
-      <path d="M17 44 L19 12 Q20 9 23 11 L41 26 Q50 24 59 26 L77 11 Q80 9 81 12 L83 44 Q91 58 85 72 Q75 90 50 90 Q25 90 15 72 Q9 58 17 44 Z" fill="currentColor"/>
-      <path d="M29 58 Q35.5 65 42 58 M58 58 Q64.5 65 71 58" stroke="var(--cat-face)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <path d="M46 69 L54 69 L50 74 Z" fill="var(--cat-face)"/>
+      <!-- ears -->
+      <path d="M12 46 Q11 20 17 9 Q20 5 25 8 Q37 15 45 25 Z" fill="#EADCCB" stroke="#CDB9A4" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M88 46 Q89 20 83 9 Q80 5 75 8 Q63 15 55 25 Z" fill="#EADCCB" stroke="#CDB9A4" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M18 38 Q18 21 21 14 Q30 19 37 26 Z" fill="#F5B5AA"/>
+      <path d="M82 38 Q82 21 79 14 Q70 19 63 26 Z" fill="#F5B5AA"/>
+      <!-- head -->
+      <path d="M50 20 C77 20 95 37 95 60 C95 82 75 94 50 94 C25 94 5 82 5 60 C5 37 23 20 50 20 Z" fill="url(#g-fur)" stroke="#CDB9A4" stroke-width="1.5"/>
+      <!-- tabby stripes -->
+      <path d="M43.5 22.5 Q46 31 46.5 37 M50 21 L50 34 M56.5 22.5 Q54 31 53.5 37" stroke="#BCA693" stroke-width="3.6" stroke-linecap="round" fill="none" opacity=".75"/>
+      <path d="M6.5 56 L16 58.5 M7 64 L16 64.5 M93.5 56 L84 58.5 M93 64 L84 64.5" stroke="#BCA693" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/>
+      <!-- blush -->
+      <ellipse cx="22" cy="74" rx="7" ry="4" fill="#F4A39A" opacity=".5"/>
+      <ellipse cx="78" cy="74" rx="7" ry="4" fill="#F4A39A" opacity=".5"/>
+      <!-- eyes -->
+      <circle cx="33" cy="60" r="12" fill="url(#g-eye)" stroke="#2E1A10" stroke-width="2"/>
+      <circle cx="33" cy="61.5" r="6.8" fill="#1E110A"/>
+      <circle cx="28.5" cy="55" r="4.2" fill="#fff"/>
+      <circle cx="37" cy="66" r="1.9" fill="#fff" opacity=".9"/>
+      <circle cx="67" cy="60" r="12" fill="url(#g-eye)" stroke="#2E1A10" stroke-width="2"/>
+      <circle cx="67" cy="61.5" r="6.8" fill="#1E110A"/>
+      <circle cx="62.5" cy="55" r="4.2" fill="#fff"/>
+      <circle cx="71" cy="66" r="1.9" fill="#fff" opacity=".9"/>
+      <path d="M20 52 Q24 45.5 31 46 M80 52 Q76 45.5 69 46" stroke="#2E1A10" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+      <!-- nose and mouth -->
+      <path d="M46.5 71 Q50 69.6 53.5 71 Q51.5 75.2 50 75.2 Q48.5 75.2 46.5 71 Z" fill="#EE8C84"/>
+      <path d="M44 78 Q47 81.5 50 77.6 Q53 81.5 56 78" stroke="#7A4E3E" stroke-width="1.9" stroke-linecap="round" fill="none"/>
     </symbol>
     <symbol id="i-x" viewBox="0 0 100 100">
-      <path d="M22 22 L78 78 M78 22 L22 78" stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="i-paw" viewBox="0 0 24 24">
-      <ellipse cx="12" cy="16" rx="5.2" ry="4.3" fill="currentColor"/>
-      <ellipse cx="5" cy="10.5" rx="2.2" ry="2.8" fill="currentColor"/>
-      <ellipse cx="9.3" cy="6.3" rx="2.2" ry="2.9" fill="currentColor"/>
-      <ellipse cx="14.7" cy="6.3" rx="2.2" ry="2.9" fill="currentColor"/>
-      <ellipse cx="19" cy="10.5" rx="2.2" ry="2.8" fill="currentColor"/>
+      <path d="M22 22 L78 78 M78 22 L22 78" stroke="currentColor" stroke-width="15" stroke-linecap="round"/>
     </symbol>
   </defs>
 </svg>
 
 <main class="app">
   <header class="top">
-    <h1>Kocie <span>Koce</span></h1>
-    <div class="streak" id="streak" title="Plansze ułożone pod rząd bez wtopy i bez podpowiedzi">
-      <svg class="paw"><use href="#i-paw"/></svg>
-      <span>Passa <b id="streakCur">0</b></span>
-      <small>rekord <span id="streakBest">0</span></small>
+    <div class="streak pill" id="streak" title="Passa: plansze ułożone pod rząd bez wtopy i bez podpowiedzi">
+      <svg class="face" viewBox="0 0 100 100"><use href="#i-cat"/></svg>
+      <b id="streakCur">0</b>
+      <small>/ <span id="streakBest">0</span></small>
     </div>
+    <div class="title">
+      <h1>Kocie Koce</h1>
+      <div class="kicker" id="kicker">Poziom</div>
+    </div>
+    <button class="round pill" id="bMenu" type="button" aria-label="Zasady i ustawienia">?</button>
   </header>
 
   <div class="picker">
-    <nav class="modes" id="diffs" aria-label="Poziom trudności"></nav>
-    <nav class="modes sizes" id="sizes" aria-label="Rozmiar planszy"></nav>
+    <nav class="seg pill" id="diffs" aria-label="Poziom trudności"></nav>
+    <nav class="seg sizes pill" id="sizes" aria-label="Rozmiar planszy"></nav>
   </div>
 
   <div class="stage">
-    <div class="status">
-      <div class="left"><span>czas <b id="timer">0:00</b></span><span><b id="count">0/8</b> kotów</span></div>
-      <div class="right"><span id="oops"></span><span id="best"></span></div>
-    </div>
-    <div class="board-wrap" id="wrap">
-      <div id="board" tabindex="0" role="grid" aria-label="Plansza"></div>
-      <svg id="lines" preserveAspectRatio="none" aria-hidden="true"></svg>
-      <div class="gen" id="gen" hidden>Rozkładam koce…</div>
+    <div class="card">
+      <div class="status">
+        <div class="left"><span>czas <b id="timer">0:00</b></span><span><b id="count">0/8</b> kotów</span></div>
+        <div class="right"><span id="oops"></span></div>
+      </div>
+      <div class="board-wrap" id="wrap">
+        <div id="board" tabindex="0" role="grid" aria-label="Plansza"></div>
+        <div class="gen" id="gen" hidden>Rozkładam koce…</div>
+      </div>
+      <div class="msg" id="toast" role="status" aria-live="polite"></div>
     </div>
   </div>
 
   <div class="tools">
-    <button id="bUndo" type="button" aria-label="Cofnij">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Cofnij</button>
-    <button id="bRedo" type="button" aria-label="Ponów">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>Ponów</button>
-    <button id="bHint" type="button" aria-label="Podpowiedź">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Podpowiedź</button>
-    <button id="bClear" type="button" aria-label="Wyczyść krzyżyki">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4-4L14 6l7 7-8 8H7z"/><path d="M21 21H11"/></svg>Wyczyść</button>
-    <button id="bNew" type="button" aria-label="Nowa plansza">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg>Nowa</button>
-    <button id="bMenu" type="button" aria-label="Zasady i ustawienia">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 17h.01"/></svg>Zasady</button>
+    <button id="bUndo" type="button" aria-label="Cofnij"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></span>Cofnij</button>
+    <button id="bRedo" type="button" aria-label="Ponów"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></span>Ponów</button>
+    <button id="bHint" type="button" aria-label="Podpowiedź"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></span>Podpowiedź</button>
+    <button id="bClear" type="button" aria-label="Wyczyść krzyżyki"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4-4L14 6l7 7-8 8H7z"/><path d="M21 21H11"/></svg></span>Wyczyść</button>
+    <button id="bNew" type="button" aria-label="Nowa plansza"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg></span>Nowa</button>
+    <button id="bSet" type="button" aria-label="Ustawienia"><span class="ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>Ustawienia</button>
   </div>
 </main>
 
@@ -305,13 +369,14 @@ h1 span { color: var(--accent); }
   <div class="backdrop" id="sheetBackdrop"></div>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="grab"></div>
+    <svg class="hero" viewBox="0 0 100 100" aria-hidden="true"><use href="#i-cat"/></svg>
     <h2 id="sheetTitle">Zasady</h2>
     <p>Na każdym kolorowym kocu śpi dokładnie jeden kot. Koty nie znoszą tłoku, więc:</p>
     <ul>
       <li>w każdym wierszu i w każdej kolumnie jest jeden kot,</li>
       <li>dwa koty nigdy się nie stykają, także po skosie.</li>
     </ul>
-    <p>Jeden kot śpi na planszy od początku (na poduszce). Każda plansza ma dokładnie jedno rozwiązanie i daje się rozwiązać logicznie, bez zgadywania. Każdy koc ma co najmniej 5 pól.</p>
+    <p>Jeden kot śpi na planszy od początku (na pikowanej poduszce). Każda plansza ma dokładnie jedno rozwiązanie i daje się rozwiązać logicznie, bez zgadywania. Każdy koc ma co najmniej 5 pól.</p>
     <h2>Poziomy</h2>
     <ul>
       <li><b>Łatwy</b>: wystarczy szukać miejsc, gdzie został jeden wolny kafelek.</li>
@@ -323,18 +388,16 @@ h1 span { color: var(--accent); }
     <p><b>Dotknij</b> pustego pola: ×. Dotknij ×: kot. Dotknij kota: zabierasz go.</p>
     <p><b>Przeciągnij palcem</b> od pustego pola, a × stanie na całej trasie. Przeciągnij od ×, a będziesz je zmazywać. Przeciąganie nie rusza kotów.</p>
     <p><b>Wtopa</b> to kot położony tam, gdzie nie może spać. Ucieka, a na jego miejscu zostaje ×. Wtopa albo podpowiedź zeruje passę.</p>
-    <h2>Ustawienia</h2>
+    <h2 id="settingsTitle">Ustawienia</h2>
     <label class="toggle"><input type="checkbox" id="optAuto"> Auto-krzyżyki wokół kotów (jasne ×)</label>
     <label class="toggle"><input type="checkbox" id="optVibe"> Wibracja (Android)</label>
     <button class="btn primary" id="sheetClose" type="button">Graj</button>
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
 <div class="win" id="win" hidden>
-  <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
-    <svg class="cat-hero"><use href="#i-cat"/></svg>
+  <div class="card-win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <svg class="cat-hero" viewBox="0 0 100 100"><use href="#i-cat"/></svg>
     <h2 id="winTitle">Wszystkie koty śpią</h2>
     <div class="mode" id="winMode"></div>
     <div class="big" id="winTime">0:00</div>

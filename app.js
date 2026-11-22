@@ -8,7 +8,7 @@
   const DAILY = { n: 8, diff: 'hard' };
   const LS = 'kocie-koce-v1';
   const $ = (id) => document.getElementById(id);
-  const board = $('board'), lines = $('lines'), wrap = $('wrap');
+  const board = $('board'), wrap = $('wrap');
 
   let S;          // persisted: { size, diff, daily, games, next, best, streak, settings }
   let G = null;   // current game (also lives in S.games[key])
@@ -35,10 +35,19 @@
   };
   const vibe = (ms) => { if (!S.settings.vibe) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 
-  let toastT;
+  // The message line under the board shows a short note for a moment, then falls back to the board's own line.
+  let toastT = null;
+  function idleMsg() {
+    if (!G) return '';
+    if (G.done) return 'Wszystkie koty śpią. Dotknij „Nowa”, by grać dalej.';
+    const b = S.best[G.key];
+    const base = G.daily ? 'Plansza dnia, taka sama dla wszystkich' : (b ? `Twój rekord na tym poziomie: ${fmt(b)}` : 'Na każdym kocu śpi jeden kot');
+    return S.streak.cur > 0 ? `${base} · passa ${S.streak.cur}` : base;
+  }
+  function showIdle() { if (toastT) return; const t = $('toast'); t.textContent = idleMsg(); t.classList.remove('on'); }
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('on');
-    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200);
+    clearTimeout(toastT); toastT = setTimeout(() => { toastT = null; showIdle(); }, 2600);
   }
 
   // ---------- puzzle factory (Web Workers, with a main-thread fallback) ----------
@@ -171,24 +180,11 @@
       d.style.background = `var(--r${G.reg[i] % 10})`;
       board.appendChild(d); cellEls.push(d); viewCache.push('');
     }
-    drawLines();
     cursor = Math.min(cursor, n * n - 1);
     wrap.classList.toggle('won', G.done);
     $('win').hidden = true;
     render(); renderStatus(); updateButtons();
     if (!G.daily) prefetch(G.key, G.n, G.key.split('-')[1]);
-  }
-  function drawLines() {
-    const n = G.n; let thin = '', thick = '';
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-      const i = r * n + c;
-      if (c < n - 1) { const seg = `M${c + 1} ${r}V${r + 1}`; G.reg[i] !== G.reg[i + 1] ? thick += seg : thin += seg; }
-      if (r < n - 1) { const seg = `M${c} ${r + 1}H${c + 1}`; G.reg[i] !== G.reg[i + n] ? thick += seg : thin += seg; }
-    }
-    lines.setAttribute('viewBox', `0 0 ${n} ${n}`);
-    lines.innerHTML =
-      `<path d="${thin}" stroke="var(--edge)" stroke-opacity=".18" stroke-width="1" vector-effect="non-scaling-stroke" fill="none"/>` +
-      `<path d="${thick}" stroke="var(--edge)" stroke-width="3" stroke-linecap="square" vector-effect="non-scaling-stroke" fill="none"/>`;
   }
   function blockedMap() {
     const n = G.n, blk = new Uint8Array(n * n);
@@ -223,8 +219,8 @@
     const cats = G.cells.filter((s) => s === CAT).length;
     $('count').textContent = `${cats}/${G.n}`;
     $('oops').innerHTML = G.oops ? `<span class="oops">wtopy: ${G.oops}</span>` : (G.hints ? `podpowiedzi: ${G.hints}` : '');
-    const b = S.best[G.key];
-    $('best').textContent = G.daily ? DIFF_LABEL[G.diff] : (b ? `rekord ${fmt(b)}` : '');
+    $('kicker').textContent = `${G.daily ? 'Dzienna · ' : ''}${DIFF_LABEL[G.diff]} · ${G.n}×${G.n}`;
+    showIdle();
     $('streakCur').textContent = S.streak.cur;
     $('streakBest').textContent = S.streak.best;
     $('streak').classList.toggle('broken', !G.done && (G.oops > 0 || G.hints > 0));
@@ -471,6 +467,7 @@
   const openSheet = () => { $('sheet').hidden = false; };
   const closeSheet = () => { $('sheet').hidden = true; try { localStorage.setItem(LS + '-seen', '1'); } catch (e) {} };
   $('bMenu').addEventListener('click', openSheet);
+  $('bSet').addEventListener('click', () => { openSheet(); $('settingsTitle').scrollIntoView({ block: 'start' }); });
   $('sheetClose').addEventListener('click', closeSheet);
   $('sheetBackdrop').addEventListener('click', closeSheet);
 
